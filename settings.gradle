@@ -1,0 +1,20 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    plugins {
+        id 'org.springframework.boot' version '3.3.5'
+        id 'io.spring.dependency-management' version '1.1.6'
+    }
+}
+
+rootProject.name = 'aris-springboot-demo'
+
+include 'common-lib'
+include 'eureka-server'
+include 'api-gateway'
+include 'auth-service'
+include 'user-service'
+include 'order-service'
+include 'payment-service'

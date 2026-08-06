@@ -1,0 +1,79 @@
+# --- Gradle ---
+.gradle/
+build/
+**/build/
+.gradletasknamecache
+
+# --- Local run / packaging ---
+bin/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+*.hprof
+dump.hprof
+
+# Keep the Gradle wrapper JAR (needed to build without a local Gradle install)
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- IDE / editor ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+*.code-workspace
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Spring / local overrides (secrets & machine-specific) ---
+**/application-local.yml
+**/application-local.yaml
+**/application-secret.yml
+**/application-secret.yaml
+**/application-*.local.yml
+**/application-*.local.yaml
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+secrets/
+.secrets/
+
+# --- Logs & temp ---
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# --- Local databases (H2 etc.) ---
+*.db
+*.mv.db
+*.trace.db
+
+# --- Test / coverage ---
+.jacoco/
+jacoco.exec
+test-output/
