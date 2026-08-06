@@ -1,0 +1,22 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:aris-demo-jwt-secret-change-me-32chars}
+  issuer: ${JWT_ISSUER:aris-auth}
+  expiry-seconds: ${JWT_EXPIRY_SECONDS:3600}
+
+logging:
+  level:
+    com.aris: INFO

@@ -1,0 +1,37 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/aris_demo}
+    username: ${SPRING_DATASOURCE_USERNAME:aris}
+    password: ${SPRING_DATASOURCE_PASSWORD:aris}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    # Schema owned by auth-service (V1__users.sql). user-service only reads/writes the same table.
+    enabled: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:aris-demo-jwt-secret-change-me-32chars}
+  issuer: ${JWT_ISSUER:aris-auth}
+  expiry-seconds: ${JWT_EXPIRY_SECONDS:3600}
+
+logging:
+  level:
+    com.aris: INFO
