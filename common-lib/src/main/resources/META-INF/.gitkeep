@@ -1,0 +1,1 @@
+# Ensure META-INF exists for future spring.factories / AutoConfiguration.imports if needed.
