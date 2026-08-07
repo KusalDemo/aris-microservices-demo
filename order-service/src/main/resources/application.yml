@@ -41,9 +41,9 @@ aris:
   connect-timeout-ms: ${ARIS_CONNECT_TIMEOUT_MS:500}
   read-timeout-ms: ${ARIS_READ_TIMEOUT_MS:1000}
   static-defaults:
-    retry: ${ARIS_STATIC_RETRY:2}
+    retry: ${ARIS_STATIC_RETRY:3}
     backoff-multiplier: ${ARIS_STATIC_BACKOFF_MULTIPLIER:1.5}
-    timeout-ms: ${ARIS_STATIC_TIMEOUT_MS:1000}
+    timeout-ms: ${ARIS_STATIC_TIMEOUT_MS:3000}
   payment:
     charge-url: ${ARIS_PAYMENT_CHARGE_URL:http://payment-service/api/payments/charge}
 

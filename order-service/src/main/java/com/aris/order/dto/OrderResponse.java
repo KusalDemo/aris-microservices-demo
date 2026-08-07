@@ -12,6 +12,7 @@ public record OrderResponse(
         String currency,
         String status,
         UUID paymentId,
-        Instant createdAt
+        Instant createdAt,
+        int retriesObserved
 ) {
 }

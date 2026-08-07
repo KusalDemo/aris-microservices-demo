@@ -1,5 +1,6 @@
 package com.aris.order.service;
 
+import com.aris.common.aris.ArisCallException;
 import com.aris.common.aris.ArisDecideResponse;
 import com.aris.common.aris.ArisHttpResult;
 import com.aris.common.demo.DemoPolicyMode;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
@@ -53,6 +55,7 @@ public class OrderService {
     ) {
         demoStatsService.recordStart(policyMode, scenario);
         ArisDecideResponse lastDecision = null;
+        int retriesObserved = 0;
 
         try {
             scenarioBehaviour.beforePersistence(scenario);
@@ -83,6 +86,8 @@ public class OrderService {
                     errorRateTracker.currentErrorRate()
             );
             lastDecision = result.decision();
+            retriesObserved = Math.max(0, result.retryAttempts());
+            demoStatsService.finishCallRetries(retriesObserved);
 
             PaymentChargeResponse payment = result.body();
             order.setPaymentId(payment.paymentId());
@@ -91,24 +96,50 @@ public class OrderService {
 
             errorRateTracker.record(true);
             demoStatsService.recordSuccess(policyMode, lastDecision);
-            return toResponse(order);
+            return toResponse(order, retriesObserved);
         } catch (ResponseStatusException ex) {
+            demoStatsService.finishCallRetries(retriesObserved);
             errorRateTracker.record(false);
             demoStatsService.recordFailure(classifyOrderSideFailure(scenario, ex), policyMode, lastDecision);
-            throw ex;
-        } catch (com.aris.common.aris.ArisCallException ex) {
+            throw withRetries(ex, retriesObserved);
+        } catch (ArisCallException ex) {
+            retriesObserved = Math.max(0, ex.getRetryAttempts());
+            demoStatsService.finishCallRetries(retriesObserved);
             errorRateTracker.record(false);
             lastDecision = ex.getDecision();
             demoStatsService.recordFailure(classifyOutboundFailure(scenario), policyMode, lastDecision);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment call failed: " + ex.getMessage(), ex);
+            throw withRetries(
+                    new ResponseStatusException(
+                            HttpStatus.BAD_GATEWAY,
+                            "Payment call failed: " + ex.getMessage(),
+                            ex
+                    ),
+                    retriesObserved
+            );
         } catch (RestClientResponseException ex) {
+            demoStatsService.finishCallRetries(retriesObserved);
             errorRateTracker.record(false);
             demoStatsService.recordFailure("PAYMENT", policyMode, lastDecision);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment call failed: " + ex.getMessage(), ex);
+            throw withRetries(
+                    new ResponseStatusException(
+                            HttpStatus.BAD_GATEWAY,
+                            "Payment call failed: " + ex.getMessage(),
+                            ex
+                    ),
+                    retriesObserved
+            );
         } catch (RuntimeException ex) {
+            demoStatsService.finishCallRetries(retriesObserved);
             errorRateTracker.record(false);
             demoStatsService.recordFailure(classifyOutboundFailure(scenario), policyMode, lastDecision);
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Payment call failed: " + ex.getMessage(), ex);
+            throw withRetries(
+                    new ResponseStatusException(
+                            HttpStatus.BAD_GATEWAY,
+                            "Payment call failed: " + ex.getMessage(),
+                            ex
+                    ),
+                    retriesObserved
+            );
         }
     }
 
@@ -116,15 +147,23 @@ public class OrderService {
     public OrderResponse getById(UUID id, DemoScenario scenario) {
         scenarioBehaviour.assertDbAvailable(scenario);
         return toResponse(orderRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found")));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found")), 0);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> listByUser(UUID userId, DemoScenario scenario) {
         scenarioBehaviour.assertDbAvailable(scenario);
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(OrderService::toResponse)
+                .map(o -> toResponse(o, 0))
                 .toList();
+    }
+
+    private static ResponseStatusException withRetries(ResponseStatusException ex, int retriesObserved) {
+        ProblemDetail body = ex.getBody();
+        if (body != null) {
+            body.setProperty("retriesObserved", Math.max(0, retriesObserved));
+        }
+        return ex;
     }
 
     private static String classifyOrderSideFailure(DemoScenario scenario, ResponseStatusException ex) {
@@ -158,7 +197,7 @@ public class OrderService {
         return "PAYMENT";
     }
 
-    private static OrderResponse toResponse(OrderEntity order) {
+    private static OrderResponse toResponse(OrderEntity order, int retriesObserved) {
         return new OrderResponse(
                 order.getId(),
                 order.getUserId(),
@@ -167,7 +206,8 @@ public class OrderService {
                 order.getCurrency(),
                 order.getStatus(),
                 order.getPaymentId(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                Math.max(0, retriesObserved)
         );
     }
 }
