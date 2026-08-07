@@ -11,6 +11,7 @@ public record DemoStatsResponse(
         String lastPolicyMode,
         String lastScenario,
         String lastFailureLocation,
-        Map<String, Object> lastArisDecision
+        Map<String, Object> lastArisDecision,
+        int lastRetriesObserved
 ) {
 }

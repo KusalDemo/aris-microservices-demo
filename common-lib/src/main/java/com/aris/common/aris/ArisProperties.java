@@ -87,9 +87,9 @@ public class ArisProperties {
     }
 
     public static class StaticDefaults {
-        private int retry = 2;
+        private int retry = 3;
         private double backoffMultiplier = 1.5;
-        private long timeoutMs = 1000L;
+        private long timeoutMs = 3000L;
 
         public int getRetry() {
             return retry;
